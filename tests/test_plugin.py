@@ -149,7 +149,7 @@ class MangoHudTests(unittest.TestCase):
             game = dict(Id='one', PlayActions=[dict(Integration='LutrisIntegration', GameId='1', MangoHud=True)])
             with patch.object(module, 'configuration_path', return_value=path), \
                     patch('playlite.providers.discover_plugins', return_value={'MangoHud': plugin}), \
-                    patch('playlite.editor._persist_game', side_effect=OSError('library write failed')):
+                    patch('playlite.game_storage._persist_game', side_effect=OSError('library write failed')):
                 with self.assertRaisesRegex(OSError, 'library write failed'):
                     save_game(root, [], game)
             self.assertEqual(path.read_text(), original)
