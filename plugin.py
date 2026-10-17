@@ -46,16 +46,18 @@ def update_config(path, enabled):
     if system.get('mangohud') is enabled:
         return
     system['mangohud'] = enabled
+    encoded = yaml.safe_dump(config, sort_keys=False).encode()
     descriptor, temporary = tempfile.mkstemp(prefix='.mangohud-', dir=path.parent)
     try:
         os.fchmod(descriptor, stat.S_IMODE(path.stat().st_mode))
-        with os.fdopen(descriptor, 'w') as stream:
-            yaml.safe_dump(config, stream, sort_keys=False)
+        with os.fdopen(descriptor, 'wb') as stream:
+            stream.write(encoded)
             stream.flush()
             os.fsync(stream.fileno())
         if path.read_bytes() != original:
             raise ValueError('Lutris settings changed while saving. Reopen the game editor and retry.')
         os.replace(temporary, path)
+        return encoded
     finally:
         if os.path.exists(temporary):os.unlink(temporary)
 
