@@ -87,7 +87,7 @@ class MangoHudTests(unittest.TestCase):
                 saved = editor.collect()
                 self.assertTrue(saved[0]['MangoHud'])
                 self.assertNotIn('mangohud: true', path.read_text())
-                plugin.after_game_updated(None, {'PlayActions': saved})
+                with plugin.save_action_settings({'PlayActions': saved}):pass
                 self.assertTrue(yaml.safe_load(path.read_text())['system']['mangohud'])
                 self.assertEqual(len(editor.findChildren(QToolButton)), 1)
                 editor.deleteLater()
@@ -114,7 +114,7 @@ class MangoHudTests(unittest.TestCase):
             self.assertFalse(widget.instructions.isHidden())
             self.assertIn('mangohud %command%', widget.instructions.text())
             action = dict(widget.action, **widget.collect())
-            module.Plugin().after_game_updated(None, {'PlayActions': [action]})
+            with module.Plugin().save_action_settings({'PlayActions': [action]}):pass
             configuration.assert_not_called()
             widget.deleteLater()
 
@@ -137,3 +137,31 @@ class MangoHudTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'same MangoHud'):
                     module.Plugin().prepare_edit_save({}, {'PlayActions': actions})
                 self.assertEqual(path.read_text(), 'system: {}\n')
+
+    def test_library_failure_rolls_back_launcher_changes(self):
+        from playlite.editor import save_game
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / 'game.yml'
+            original = 'system:\n  mangohud: false\n  env:\n    KEEP: unchanged\n'
+            path.write_text(original);path.chmod(0o640)
+            plugin = module.Plugin()
+            game = dict(Id='one', PlayActions=[dict(Integration='LutrisIntegration', GameId='1', MangoHud=True)])
+            with patch.object(module, 'configuration_path', return_value=path), \
+                    patch('playlite.providers.discover_plugins', return_value={'MangoHud': plugin}), \
+                    patch('playlite.editor._persist_game', side_effect=OSError('library write failed')):
+                with self.assertRaisesRegex(OSError, 'library write failed'):
+                    save_game(root, [], game)
+            self.assertEqual(path.read_text(), original)
+            self.assertEqual(path.stat().st_mode & 0o777, 0o640)
+
+    def test_rollback_preserves_newer_external_changes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'game.yml';path.write_text('system: {}\n')
+            game = {'PlayActions': [dict(Integration='LutrisIntegration', GameId='1', MangoHud=True)]}
+            with patch.object(module, 'configuration_path', return_value=path):
+                with self.assertRaisesRegex(ValueError, 'newer changes were preserved'):
+                    with module.Plugin().save_action_settings(game):
+                        path.write_text('system:\n  mangohud: false\n  gamemode: true\n')
+                        raise OSError('library write failed')
+            self.assertTrue(yaml.safe_load(path.read_text())['system']['gamemode'])

@@ -8,6 +8,7 @@ import tempfile
 
 import yaml
 from PyQt6.QtCore import Qt
+from playlite.action_settings import update_action_files
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QLabel
 from playlite.providers import GenericPlugin, discover_plugins
 from playlite.theme import set_style
@@ -128,8 +129,6 @@ class Plugin(GenericPlugin):
     def prepare_edit_save(self, previous, game):
         self.changes(game)
 
-    def after_game_updated(self, window, game):
-        for path, enabled in self.changes(game).items():update_config(path, enabled)
-
-    def after_game_added(self, window, game, editor):
-        self.after_game_updated(window, game)
+    def save_action_settings(self, game):
+        """Commit launcher changes with the library instead of after its save."""
+        return update_action_files(self.changes(game), update_config)
