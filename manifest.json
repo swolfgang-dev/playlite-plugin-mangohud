@@ -1,0 +1,10 @@
+{
+  "id": "MangoHud",
+  "name": "MangoHud",
+  "version": "0.1.0",
+  "api_version": 1,
+  "type": "generic",
+  "enabled": true,
+  "requirements": ["PyYAML>=6"],
+  "description": "Enable MangoHud per Lutris play action, with launch-option instructions for Steam."
+}
