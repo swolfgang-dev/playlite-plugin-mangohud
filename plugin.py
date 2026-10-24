@@ -1,5 +1,4 @@
 """Per-action MangoHud controls and narrow Lutris configuration updates."""
-import importlib
 import os
 from pathlib import Path
 import sqlite3
@@ -10,26 +9,13 @@ import yaml
 from PyQt6.QtCore import Qt
 from playlite.action_settings import update_action_files
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QLabel
-from playlite.providers import GenericPlugin, discover_plugins
+from playlite.providers import GenericPlugin
 from playlite.theme import set_style
 
 
-def configuration_path(identity):
-    if not str(identity).isascii() or not str(identity).isdigit() or int(identity) < 1:
-        raise ValueError('Select a valid Lutris game ID for MangoHud.')
-    integration = discover_plugins().get('LutrisIntegration')
-    if integration is None:
-        raise ValueError('Lutris Integration is required to change MangoHud settings.')
-    runtime = importlib.import_module(type(integration).__module__ + '.runtime')
-    root = runtime.library_path()
-    with sqlite3.connect((root / 'pga.db').as_uri() + '?mode=ro', uri=True) as database:
-        row = database.execute('SELECT configpath FROM games WHERE id=?', (int(identity),)).fetchone()
-    if row is None or not isinstance(row[0], str) or Path(row[0]).name != row[0] or '\\' in row[0]:
-        raise ValueError('The selected Lutris entry has no valid configuration.')
-    path = root / 'games' / (row[0] + '.yml')
-    if path.is_symlink() or not path.is_file():
-        raise ValueError('The selected Lutris configuration is missing or is a symlink.')
-    return path
+def configuration_path(identity, database=None):
+    from playlite.lutris_library import configuration_path as locate
+    return locate(database, identity)
 
 
 def read_config(path):
@@ -73,7 +59,7 @@ class ActionSettings(QWidget):
         error = ''
         if action['Integration'] == 'LutrisIntegration':
             try:
-                current = read_config(configuration_path(action.get('GameId'))).get('system', {}).get('mangohud', False)
+                current = read_config(configuration_path(action.get('GameId'), action.get('LutrisDatabase'))).get('system', {}).get('mangohud', False)
                 self.initial = bool(current)
             except (ValueError, OSError, sqlite3.Error, yaml.YAMLError) as failure:
                 error = str(failure)
@@ -121,7 +107,7 @@ class Plugin(GenericPlugin):
             enabled = action['MangoHud']
             if type(enabled) is not bool:
                 raise ValueError('MangoHud must be enabled or disabled.')
-            path = configuration_path(action.get('GameId'))
+            path = configuration_path(action.get('GameId'), action.get('LutrisDatabase'))
             if path in changes and changes[path] != enabled:
                 raise ValueError('Actions sharing one Lutris entry must use the same MangoHud setting.')
             read_config(path)

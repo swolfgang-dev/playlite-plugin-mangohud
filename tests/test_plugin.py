@@ -31,7 +31,7 @@ class MangoHudTests(unittest.TestCase):
         with patch('playlite.providers.discover_plugins', return_value={'MangoHud': module.Plugin()}):
             scroll = QScrollArea();scroll.setWidgetResizable(True)
             body = QWidget();form = QFormLayout(body)
-            editor = PlayActionsEditor({'PlayActions': [dict(Name='Play', Integration='SteamIntegration', GameId='123')]}, [Steam()])
+            editor = PlayActionsEditor({'PlayActions': [dict(Name='Play', Integration='LutrisIntegration', GameId='123')]}, [Steam()])
             form.addRow('Play actions', editor);scroll.setWidget(body)
             scroll.resize(800, 240);scroll.show()
             settings = editor.cards[0].settings
@@ -57,7 +57,7 @@ class MangoHudTests(unittest.TestCase):
         class Steam(GameProvider):
             id = 'SteamIntegration';name = 'Steam'
             def create_action_editor(self, action, parent=None):return SteamSettings(parent)
-        action = dict(Name='Play', Integration='SteamIntegration', GameId='123')
+        action = dict(Name='Play', Integration='LutrisIntegration', GameId='123')
         with patch('playlite.providers.discover_plugins', return_value={'MangoHud': module.Plugin()}):
             editor = PlayActionsEditor({'PlayActions': [action, dict(action, GameId='456')]}, [Steam()])
             settings = editor.cards[0].settings
@@ -81,7 +81,7 @@ class MangoHudTests(unittest.TestCase):
                 editor = PlayActionsEditor({'PlayActions': [action]}, [provider])
                 settings = editor.cards[0].settings
                 self.assertFalse(settings.contributions[0].isVisibleTo(editor))
-                settings.settings.advanced_button.setChecked(True)
+                settings.findChild(QToolButton).setChecked(True)
                 self.assertTrue(settings.contributions[0].isVisibleTo(editor))
                 settings.contributions[0].toggle.setChecked(True)
                 saved = editor.collect()

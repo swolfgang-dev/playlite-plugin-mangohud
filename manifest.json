@@ -5,7 +5,9 @@
   "api_version": 1,
   "type": "generic",
   "enabled": true,
-  "minimum_playlite_version": "0.2.87",
-  "requirements": ["PyYAML>=6"],
+  "minimum_playlite_version": "0.2.88",
+  "requirements": [
+    "PyYAML>=6"
+  ],
   "description": "Enable MangoHud per Lutris play action, with launch-option instructions for Steam."
 }

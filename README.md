@@ -6,7 +6,7 @@ when the game edit is saved. Steam actions show instructions for enabling the
 overlay in that game's Steam launch options; Steam settings are never edited.
 
 Requires Playlite's `GenericPlugin.create_action_settings` extension point,
-Lutris Integration for Lutris actions, and MangoHud installed for the game runner.
+core Lutris support for Lutris actions, and MangoHud installed for the game runner.
 No overlay settings are enabled automatically by installing this plugin.
 
 MangoHud settings apply to a Lutris entry, so actions using the same Lutris ID
