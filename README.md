@@ -1,5 +1,8 @@
 # MangoHud for Playlite
 
+Development-only plugin. It is excluded from the release catalogue, and its
+workflow runs tests without building or publishing releases.
+
 Adds **Enable MangoHud** under each play action's **Advanced launch settings**.
 Lutris actions update only the selected Lutris entry's `system.mangohud` setting
 when the game edit is saved. Steam actions show instructions for enabling the

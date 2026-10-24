@@ -1,14 +1,13 @@
-name: Test and release plugin
+name: Test plugin
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  release:
+  test:
     runs-on: ubuntu-latest
     env:
       QT_QPA_PLATFORM: offscreen
@@ -33,12 +32,3 @@ jobs:
       - name: Run plugin tests
         working-directory: plugin
         run: python -m unittest discover -s tests -q
-      - name: Build standalone release
-        working-directory: plugin
-        run: python tools/build_release.py
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
-        working-directory: plugin
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes
